@@ -1,0 +1,199 @@
+body {
+	/* padding-top: 20px; */
+	margin: 0;
+	font-family: Lora;
+}
+
+section {
+	padding: 50px 0;
+}
+
+nav {
+	background: #46464679;
+	height: 60px;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 100;
+}
+
+nav>a {
+	font-family: 'Open Sans', sans-serif;
+	color: #ffffff;
+	font-size: 26px;
+	font-weight: 700;
+	text-align: left;
+	text-decoration: none;
+	position: absolute;
+	left: 25px;
+	top: 10px;
+}
+
+nav>a>span {
+	font-family: 'Open Sans', sans-serif;
+	color: #f3f3ed;
+	text-align: left;
+}
+
+nav>ul {
+	position: absolute;
+	right: 25px;
+	top: 5px;
+}
+
+nav>ul>li {
+	display: inline-block;
+	padding: 0 15px;
+}
+
+nav>ul>li>a {
+	color: #fff;
+	text-decoration: none;
+	-webkit-transition: all 0.3s ease-in-out;
+	transition: all 0.3s ease-in-out;
+}
+
+nav>ul>li>a:hover,
+nav>ul>li>a:focus {
+	color: #a16238;
+}
+
+header {
+	background-attachment: fixed;
+	background-image: url(terrorism3.jpg);
+	/* background-color: black; */
+	background-repeat: no-repeat;
+	background-size: 100% 100%;
+	background-position: 100% 50%;
+	color: #e9e2e2;
+	height: 650px;
+	text-align: center;
+	/* text-align: justify; */
+	padding-top: 15%;
+}
+
+header h1 {
+	/* margin-top: 3000px; */
+	font-size: 100px;
+	margin-top: 100px;
+	font-family: 'Lora';
+	letter-spacing: 10px;
+}
+
+header h2 {
+	font-size: 45px;
+	margin: 0;
+}
+
+header p {
+	font-size: 35px;
+	margin-top: 0;
+}
+
+header img {
+	padding: 35px 0;
+}
+
+header a {
+	padding: 10px 35px;
+	color: #0B1016;
+	background-color: #CDC71D;
+	text-decoration: none;
+	font-weight: bold;
+	font-size: 14px;
+	-webkit-transition: all 0.3s ease-in-out;
+	transition: all 0.3s ease-in-out;
+}
+
+header a:hover {
+	background-color: #fff;
+	color: #0B1016;
+	cursor: pointer;
+}
+
+
+.service {
+	background-image: url(terrorism3.jpg);
+	/* background-color: black; */
+	background-size: cover;
+	padding-left: 10%;
+	padding-right: 5%;
+	display: inline-block;
+}
+
+.serviceWrapper {
+	width: 60%;
+	float: left;
+}
+
+
+
+.service h2 {
+	color:#7e8287;
+	font-size: 46px;
+	font-weight: bold;
+	margin-bottom: 0;
+}
+
+.service p {
+	color: #7e8287;
+	line-height: 41px;
+	font-size: 20px;
+}
+
+.service img {
+	float: right;
+	width: 35%;
+	transition: filter 0.5s ease-in-out;
+}
+
+#eff1f3.img-link:hover img {
+	filter: blur(1px);
+}
+.service2 {
+	background-image: url(terrorism3.jpg);
+	/* background-color: #050505; */
+	background-size: cover;
+	padding-left: 10%;
+	padding-right: 5%;
+	display: inline-block;
+}
+
+.serviceWrapper2 {
+	width: 60%;
+	float: right;
+}
+
+.service2 img {
+	float: left;
+	width: 35%;
+	transition: filter 0.5s ease-in-out;
+}
+
+.service2 h2 {
+	color:#7e8287;
+	font-size: 46px;
+	font-weight: bold;
+	margin-bottom: 0;
+	margin-left: 200px;
+}
+
+.service2 p {
+	color: #7e8287;
+	font-size: 20px;
+	line-height: 41px;
+}
+
+
+
+footer {
+	width: 100%;
+	padding: 10px 0;
+	background: #000;
+}
+
+footer p {
+	color: #7e8287;
+	text-align: center;
+}

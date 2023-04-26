@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Bar Chart</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/d3-scale.v3.min.js"></script>
+    <script src="https://d3js.org/d3-axis.v2.min.js"></script>
+    <script src="https://unpkg.com/d3-simple-slider"></script>
+    <style>
+        .span-class {
+            color: black;
+            position: absolute;
+            top: 100px;
+            font-size: 35px;
+            font-family: Lora;
+            /* margin-left: 150px; */
+            left: 60%; 
+            transform: translateX(-50%);
+        }
+
+        /* select {
+            font-size: 20px;
+            margin-top: 100px;
+            margin-left: 95%;
+            color: rgb(8, 8, 8);
+        } */
+        select {
+            font-size: 20px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-left: 10px;
+            margin-bottom: 70px;
+            margin-top: 100px;
+            width: 300px;
+            background-color: #f8f8f8;
+            color: #555;
+            font-family: Arial, sans-serif;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #7f9cf5;
+        }
+        body {
+            background-color: #dcdde2;
+            font-family: Lora;
+            margin: 0;
+            padding: 0;
+        }
+
+        select {
+            margin-left: 10px;
+        }
+
+        .select-text{
+            margin-left: 800px; 
+            font-size: 30px;
+            font-family: Lora;
+        }
+
+        .d3-slider-track {
+            stroke: #756f6f;
+        }
+
+        .d3-slider-selection {
+            fill: #a3aaa7;
+        }
+
+        nav {
+            background: #46464679;
+            height: 60px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        nav>a {
+            font-family: Lora;
+            color: #ffffff;
+            font-size: 26px;
+            font-weight: 700;
+            text-align: left;
+            text-decoration: none;
+            position: absolute;
+            left: 25px;
+            top: 10px;
+        }
+
+        nav>a>span {
+            font-family: Lora;
+            color: #f3f3ed;
+            text-align: left;
+        }
+
+        nav>ul {
+            position: absolute;
+            right: 25px;
+            top: 5px;
+        }
+
+        nav>ul>li {
+            display: inline-block;
+            padding: 0 15px;
+        }
+
+        nav>ul>li>a {
+            color: #fff;
+            text-decoration: none;
+            -webkit-transition: all 0.3s ease-in-out;
+            transition: all 0.3s ease-in-out;
+        }
+
+        nav>ul>li>a:hover,
+        nav>ul>li>a:focus {
+            color: #cfc91d;
+        }
+
+        .axis text {
+            fill: black;
+        }
+
+        .axis path,
+        .axis line {
+            stroke: black;
+        }
+
+        .chart-title {
+            fill: black;
+        }
+
+        .legend text {
+            fill: black;
+        }
+    </style>
+</head>
+
+<body class="body">
+    <nav>
+        <a href="#index">
+            Countrywise Attacks
+        </a>
+        <ul>
+			<li>
+				<a href="website.html">HOME</a>
+			</li>
+			<li>
+				<a href="world4.html">WORLDWIDE ATTACKS</a>
+			</li>
+			<li>
+				<a href="barGraph.html">COUNTRYWISE ATTACKS</a>
+			</li>
+			<li>
+				<a href="sankey3.html">ATTACK TYPES, GROUPS AND WEAPONS</a>
+			</li>
+			<li>
+				<a href="stackedChart2.html">ATTACK TYPES DISTRIBUTION</a>
+			</li>
+			<li>
+				<a href="pieNew.html">TARGETS OF TERRORIST GROUPS</a>
+			</li>
+		</ul>
+    </nav>
+    <span id="selectedCountry" class="span-class"></span>
+    <br />
+    <br />
+    <br />
+    <br />
+
+    <div id="tooltip" style="position: absolute; visibility: hidden;"></div>
+    <div id="chart" class="chart"></div>
+    <span class="select-text">
+        Choose a country:
+    </span>
+    <select id="countryChoice" class="select">
+        <option value="null">Select a Country</option>
+        <option value="Iraq">Iraq</option>
+        <option value="USA">USA</option>
+        <option value="Afghanistan">Afghanistan</option>
+        <option value="England">United Kingdom</option>
+        <option value="India">India</option>
+        <option value="Pakistan">Pakistan</option>
+    </select>
+
+
+
+    <br /><br />
+    <svg width="2100" height="1300">
+    </svg>
+    <script class="graph">
+        var flag = 0
+        var svg = d3.select("svg")
+        svg.append("g")
+        const width = +svg.attr("width")
+        const height = +svg.attr("height")
+        const margin = { "top": 150, "bottom": 40, "left": 600, "right": 0 }
+        const sliderWidth = 500;
+        const sliderHeight = 100;
+        const sliderMarginTop = 20;
+        const sliderMarginLeft = 550;
+
+        const render = (data, selectedCountry) => {
+            document.getElementById("selectedCountry").innerHTML = "Number of terrorist activities yearwise in " + selectedCountry
+            const innerWidth = width - margin.left - margin.right
+            const innerHeight = height - margin.top - margin.bottom
+            const result = {};
+
+            data.forEach((record) => {
+                const { country, year } = record;
+                if (!result[country]) {
+                    result[country] = [];
+                }
+
+                const existingYear = result[country].find((r) => r.year === year);
+                if (existingYear) {
+                    existingYear.count++;
+                } else {
+                    result[country].push({ year, count: 1 });
+                }
+            });
+
+            const countryToDisplay = result[selectedCountry];
+
+            // console.log("in create slider")
+            const sliderGroup = svg
+                .append('g')
+                .attr('class', 'slider')
+                .attr("margin-left", "50%")
+                .attr('transform', `translate(${sliderMarginLeft},${sliderMarginTop})`);
+
+            // console.log(countryToDisplay)
+            const years = d3.extent(countryToDisplay, d => d.year);
+
+            const sliderScale = d3.scaleLinear().domain(years).range([0, 1000]);
+
+            const slider = d3
+                .sliderBottom(sliderScale)
+                .ticks(20)
+                .tickFormat(d3.format('.0f'))
+                .default(years)
+                .fill('red')
+                .on('onchange', updateChart);
+
+            sliderGroup.call(slider);
+
+            function updateChart([minYear, maxYear]) {
+
+                flag = 1
+                // console.log("in update chart")
+                svg.selectAll("rect").remove()
+                svg.selectAll(".x-axis").remove()
+                svg.selectAll(".y-axis").remove()
+
+
+                const filteredData = countryToDisplay.filter(
+                    d => d.year >= minYear && d.year <= maxYear
+                );
+
+                const xScale = d3.scaleLinear()
+                    .domain([0, d3.max(filteredData, d => d.count)])
+                    .range([margin.left, innerWidth]);
+
+                const yScale = d3.scaleBand()
+                    .domain(filteredData.map(d => d.year))
+                    .range([margin.top, innerHeight])
+                    .padding(0.2);
+
+                var color = d3.scaleSequential()
+                    .interpolator(d3.interpolate("#e9d8a6","#ae2012"))
+                    .domain(d3.extent(countryToDisplay, d => d.year));
+
+                const xAxis = d3.axisTop(xScale);
+                const yAxis = d3.axisLeft(yScale);
+
+                svg.append("g")
+                    .attr("class", "x-axis")
+                    .attr("transform", `translate(0, ${margin.top})`)
+                    .call(xAxis)
+                    .attr("font-size", "20px");
+
+                svg.append("g")
+                    .attr("class", "y-axis")
+                    .attr("transform", `translate(${margin.left}, 0)`)
+                    .call(yAxis)
+                    .attr("font-size", "20px");
+
+                // Update bars
+                const bars = svg
+                    .selectAll('rect')
+                    .data(filteredData, d => d.year)
+                    .join("rect")
+                    .attr("x", xScale(0))
+                    .attr("y", d => yScale(d.year) + 5)
+
+                bars.transition()
+                    .duration(1000)
+                    .attr("width", d => xScale(d.count) - margin.left)
+                    .attr("height", yScale.bandwidth())
+                    // .attr("height", 30)
+                    .style("fill", function (d) {
+                        return color(d.year);
+                    })
+                bars.on("mouseover", function (event, d) {
+                    d3.select(this).style("fill", "black");
+                    tooltip.style("visibility", "visible")
+                        .html("Year: " + d.year + "<br/> Number of Terrorist Activities: " + d.count)
+                        .style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
+                })
+                    .on("mouseout", function () {
+                        d3.select(this).style("fill", function (d) {
+                            return color(d.year);
+                        });
+                        tooltip.style("visibility", "hidden");
+                    })
+                    bars.exit().remove();
+                    
+                }
+                
+                
+                const xScale = d3.scaleLinear()
+                .domain([0, d3.max(countryToDisplay, d => d.count)])
+                .range([margin.left, innerWidth]);
+                
+                const yScale = d3.scaleBand()
+                .domain(countryToDisplay.map(d => d.year))
+                .range([margin.top, innerHeight])
+                .paddingInner(0.2);
+                
+                const xAxis = d3.axisTop(xScale)
+                const yAxis = d3.axisLeft(yScale)
+                
+                svg.append("g")
+                .attr("class", "x-axis")
+
+                .attr("transform", `translate(0, ${margin.top})`)
+                .call(xAxis)
+                .attr("color", "black")
+                .attr("font-size", "20px");
+                
+                svg.append("g")
+                .attr("class", "y-axis")
+                
+                .attr("transform", `translate(${margin.left}, 0)`)
+                .call(yAxis)
+                .attr("color", "black")
+                .attr("font-size", "20px");
+                console.log(selectedCountry)
+                var country_name = selectedCountry
+                svg.append("text")
+                .attr("x", "900")
+                .attr("y", "95")
+                .text(`Number of Terrorist Activities in ${country_name}`)
+                .attr("fill", "black")
+                .attr("font-size", "20px");
+                
+                svg.append("text")
+                .attr("x", "-500")
+                .attr("y", "550")
+                .attr("transform", "rotate(-90,20, 50)")
+                .text("Years")
+                .attr("fill", "black")
+                .attr("font-size", "20px");
+                
+                var color = d3.scaleSequential()
+                .domain(d3.extent(countryToDisplay, d => d.year))
+                .interpolator(d3.interpolate("#e9d8a6", "#ae2012"));
+                
+                
+                var bars = svg.selectAll("rect")
+                .data(countryToDisplay)
+                .join("rect")
+                .attr("x", xScale(0))
+                .attr("y", d => yScale(d.year) + 5)
+                
+                bars.transition()
+                .duration(1000)
+                .attr("width", d => xScale(d.count) - margin.left)
+                .attr("height", yScale.bandwidth())
+                // .attr("height", 30)
+                .style("fill", function (d) {
+                    return color(d.year);
+                })
+                bars.on("mouseover", function (event, d) {
+                    d3.select(this).style("fill", "black");
+                    tooltip.style("visibility", "visible")
+                    .html("Year: " + d.year + "<br/> Number of Terrorist Activities: " + d.count)
+                    .style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px");
+                })
+                .on("mouseout", function () {
+                    d3.select(this).style("fill", function (d) {
+                        return color(d.year);
+                    });
+                    tooltip.style("visibility", "hidden");
+                })
+                
+            }
+
+
+            // let selectedCountry = "Iraq"
+            
+            let selectedCountry = localStorage.getItem("country")
+            var selectedYear = 1975
+            
+            const selectCountry = document.getElementById("countryChoice")
+            
+        selectCountry.addEventListener("change", () => {
+            selectedCountry = selectCountry.value
+            svg.selectAll("*").remove()
+            render(data, selectedCountry)
+        })
+
+
+        async function loadData() {
+            data = await d3.csv("extracted_data.csv", d => {
+                d.year = +d.year
+                return d;
+            });
+            render(data, selectedCountry)
+        }
+        loadData();
+
+        var tooltip = d3.select("body")
+            .append("div")
+            .style("position", "absolute")
+            .style("font-family", "'Open Sans', sans-serif")
+            .style("color", "white")
+            .style("font-size", "20px")
+            .style("z-index", "10")
+            .style("padding", "10px")
+            .style("visibility", "hidden")
+            .style("background-color", "black");
+    </script>
+
+</body>
+
+</html>

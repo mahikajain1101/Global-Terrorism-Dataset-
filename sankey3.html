@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Sankey Chart</title>
+<style>
+    /* Define styles for the chart elements */
+    body {
+        background-color: #dcdde2;
+        font-family: Lora;
+        margin: 0;
+        padding: 0;
+    }
+
+    .node {
+        font-size: 14px;
+    }
+
+    .link {
+        fill: none;
+        stroke-opacity: 0.4;
+    }
+
+    .link:hover {
+        stroke-opacity: 0.7;
+    }
+
+    text {
+        font-family: Lora;
+        font-size: 20px;
+        font-weight: 700;
+        fill: #4d4d4d;
+    }
+
+    .text-header {
+        font-size: 30px;
+        font-weight: 800;
+        fill: #4d4d4d;
+    }
+
+    .tooltip {
+        position: absolute;
+        text-align: center;
+        padding: 6px;
+        font-size: 20px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        pointer-events: none;
+    }
+
+
+    nav {
+        background: #46464679;
+        height: 60px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+    }
+
+    nav>a {
+        font-family: Lora;
+        color: #ffffff;
+        font-size: 26px;
+        font-weight: 700;
+        text-align: left;
+        text-decoration: none;
+        position: absolute;
+        left: 25px;
+        top: 10px;
+    }
+
+    nav>a>span {
+        font-family: Lora;
+        color: #f3f3ed;
+        text-align: left;
+    }
+
+    nav>ul {
+        position: absolute;
+        right: 25px;
+        top: 5px;
+    }
+
+    nav>ul>li {
+        display: inline-block;
+        padding: 0 15px;
+    }
+
+    nav>ul>li>a {
+        color: #fff;
+        text-decoration: none;
+        -webkit-transition: all 0.3s ease-in-out;
+        transition: all 0.3s ease-in-out;
+    }
+
+    nav>ul>li>a:hover,
+    nav>ul>li>a:focus {
+        color: #cfc91d;
+    }
+</style>
+
+<body>
+    <nav>
+        <a href="#index">
+            <center>
+                <span>Terrorist Activities worldwide</span>
+            </center>
+        </a>
+        <ul>
+			<li>
+				<a href="website.html">HOME</a>
+			</li>
+			<li>
+				<a href="world4.html">WORLDWIDE ATTACKS</a>
+			</li>
+			<li>
+				<a href="barGraph.html">COUNTRYWISE ATTACKS</a>
+			</li>
+			<li>
+				<a href="sankey3.html">ATTACK TYPES, GROUPS AND WEAPONS</a>
+			</li>
+			<li>
+				<a href="stackedChart2.html">ATTACK TYPES DISTRIBUTION</a>
+			</li>
+			<li>
+				<a href="pieNew.html">TARGETS OF TERRORIST GROUPS</a>
+			</li>
+		</ul>
+    </nav>
+
+    <center>
+        <div id="my_dataviz"></div>
+    </center>
+
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/holtzy/D3-graph-gallery@master/LIB/sankey.js"></script>
+
+
+
+
+    <script>
+
+        var margin = { top: 200, right: 10, bottom: 10, left: 10 },
+            width = 1000 - margin.left - margin.right,
+            height = 1000 - margin.top - margin.bottom;
+
+        var svg = d3.select("#my_dataviz").append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom+ 300)
+            .append("g")
+            .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+
+        var color = d3.scaleOrdinal()
+            .domain([0, 100])
+            .range(d3.schemeCategory20);
+
+        var sankey = d3.sankey()
+            .nodeWidth(60)
+            .nodePadding(60)
+            .size([width, height]);
+
+            // 94D2BD 
+            // 005F73
+            // 0A9396
+            // E9C46A
+            // #370617
+            // #BB3E01
+
+            // BB3E03 - hijacking
+        var graph = {
+            'nodes': [
+                { 'node': 0, 'name': 'Bombing/Explosion', 'color': '#001219' },
+                { 'node': 1, 'name': 'Shining Path (SL)', 'color': '#896978' },
+                { 'node': 2, 'name': 'Explosives', 'color': '#370617' },
+                { 'node': 3, 'name': 'Armed Assault', 'color': '#005F73' },
+                { 'node': 4, 'name': 'Firearms', 'color': '#BB3E03' },
+                { 'node': 5, 'name': 'Assassination', 'color': '#0A9396' },
+                { 'node': 6, 'name': 'Incendiary', 'color': '#CA6702' },
+                { 'node': 7, 'name': 'Hijacking', 'color': '#94D2BD' },
+                { 'node': 8, 'name': 'Melee', 'color': '#ee9b00' },
+                { 'node': 8, 'name': 'Taliban', 'color': '#896978' },
+                { 'node': 9, 'name': 'Boko Haram', 'color': '#896978' },
+                { 'node': 10, 'name': '(ISIL)', 'color': '#896978' }
+            ],
+            'links': [{ 'source': 0, 'target': 1, 'value': 2140, 'color': '#001219' },
+            { 'source': 1, 'target': 2, 'value': 2112, 'color': '#370617' },
+            { 'source': 3, 'target': 1, 'value': 1144 , 'color': '#005F73'},
+            { 'source': 1, 'target': 4, 'value': 1816, 'color': '#BB3E03' },
+            { 'source': 5, 'target': 1, 'value': 760, 'color': '#0A9396' },
+            { 'source': 1, 'target': 6, 'value': 86, 'color': '#CA6702' },
+            { 'source': 7, 'target': 1, 'value': 2 , 'color': '#94D2BD'},
+            { 'source': 1, 'target': 8, 'value': 32, 'color': '#ee9b00' },
+            { 'source': 7, 'target': 9, 'value': 10, 'color': '#94D2BD' },
+            { 'source': 9, 'target': 2, 'value': 3153, 'color': '#370617' },
+            { 'source': 0, 'target': 9, 'value': 2864, 'color': '#001219' },
+            { 'source': 3, 'target': 9, 'value': 2118, 'color': '#005F73' },
+            { 'source': 9, 'target': 4, 'value': 2265, 'color': '#BB3E03' },
+            { 'source': 5, 'target': 9, 'value': 469, 'color': '#0A9396' },
+            { 'source': 9, 'target': 8, 'value': 36, 'color': '#ee9b00' },
+            { 'source': 9, 'target': 6, 'value': 7, 'color': '#CA6702' },
+            { 'source': 3, 'target': 10, 'value': 1024, 'color': '#005F73' },
+            { 'source': 10, 'target': 6, 'value': 31, 'color': '#CA6702' },
+            { 'source': 10, 'target': 4, 'value': 851, 'color': '#BB3E03' },
+            { 'source': 5, 'target': 10, 'value': 53, 'color': '#0A9396' },
+            { 'source': 0, 'target': 10, 'value': 835, 'color': '#001219' },
+            { 'source': 10, 'target': 2, 'value': 1014, 'color': '#370617' },
+            { 'source': 10, 'target': 8, 'value': 18, 'color': '#ee9b00' },
+            { 'source': 0, 'target': 11, 'value': 3643 , 'color': '#001219'},
+            { 'source': 11, 'target': 2, 'value': 3748, 'color': '#370617' },
+            { 'source': 3, 'target': 11, 'value': 421, 'color': '#005F73' },
+            { 'source': 11, 'target': 4, 'value': 410 , 'color': '#BB3E03'},
+            { 'source': 5, 'target': 11, 'value': 100, 'color': '#0A9396' },
+            { 'source': 7, 'target': 11, 'value': 4, 'color': '#94D2BD' },
+            { 'source': 11, 'target': 6, 'value': 5, 'color': '#CA6702' },
+            { 'source': 7, 'target': 10, 'value': 2, 'color': '#94D2BD' },
+            { 'source': 11, 'target': 8, 'value': 5, 'color': '#ee9b00' }]
+        };
+
+
+
+        sankey
+            .nodes(graph.nodes)
+            .links(graph.links)
+            .layout(32);
+
+        var link = svg.append("g")
+            .selectAll(".link")
+            .data(graph.links)
+            .enter()
+            .append("path")
+            .attr("class", "link")
+            .attr("d", sankey.link())
+            .style("stroke", function (d) { return d.color; })
+            .style("stroke-width", function (d) { return Math.max(1, d.dy) + 10; })
+            .sort(function (a, b) { return b.dy - a.dy; });
+        var tooltip = d3.select("body")
+            .append("div")
+            .attr("class", "tooltip")
+            .style("opacity", 0);
+
+        svg.selectAll(".link")
+            .on("mousemove", function (d) {
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", .9);
+                tooltip.html("Value: " + d.value)
+                    .style("left", (d3.event.pageX) + "px")
+                    .style("top", (d3.event.pageY - 28) + "px");
+            })
+            .on("mouseout", function (d) {
+                tooltip.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            });
+        svg.append("text")
+            .attr("x", 0)
+            .attr("y", -50)
+            .classed("text-header", true)
+            .text("Attack Type");
+
+        svg.append("text")
+            .attr("x", 390)
+            .attr("y", -50)
+            .classed("text-header", true)
+            .text("Terrorist Group");
+
+        svg.append("text")
+            .attr("x", 790)
+            .attr("y", -50)
+            .classed("text-header", true)
+            .text("Weapons Used");
+
+        var node = svg.append("g")
+            .selectAll(".node")
+            .data(graph.nodes)
+            .enter().append("g")
+            .attr("class", "node")
+            .attr("transform", function (d) { return "translate(" + d.x + "," + d.y +")"; })
+            .on('mouseover', function (d) {
+                d3.select(this).select('rect').style("fill", "black");
+            })
+            .on('mouseout', function () {
+                d3.select(this).select('rect').style('fill', function (d) { return d.color });
+            });
+
+
+        node.append("rect")
+            .attr("height", function (d) { return d.dy + 5 ; })
+            .attr("width", sankey.nodeWidth())
+            .style("fill", function (d) { return d.color })
+            // .style("fill","red")
+            .style("stroke", "#fff")
+            .style("stroke-width", 1)
+            .attr('title', function (d) { return d.name; })
+            .append("title")
+            .text(function (d) { return d.name; });
+
+
+        node.append("text")
+            .attr("x", 0)
+            .attr("y", function (d) { return d.dy + 25; })
+            .attr("dy", ".35em")
+            .attr("text-anchor", "end")
+            .attr("transform", null)
+            .text(function (d) { return d.name; })
+            .attr("class", "text")
+            .filter(function (d) { return d.x < width / 2; })
+            .attr("x", sankey.nodeWidth() - 60)
+            .attr("text-anchor", "start");
+
+        function dragmove(d) {
+            d3.select(this)
+                .attr("transform",
+                    "translate("
+                    + d.x + ","
+                    + (d.y = Math.max(
+                        0, Math.min(height - d.dy, d3.event.y))
+                    ) + ")");
+            sankey.relayout();
+            link.attr("d", sankey.link());
+        }
+
+    </script>
+</body>

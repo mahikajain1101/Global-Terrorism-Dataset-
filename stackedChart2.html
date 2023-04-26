@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Stacked Chart</title>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <style>
+        .heading {
+            font-family: Lora;
+            text-align: center;
+            font-size: 35px;
+            margin-top: 100px;
+            margin-left: 25 0px;
+        }
+        body {
+            background-color: #dcdde2;
+            font-family: Lora;
+            margin: 0;
+            padding: 0;
+        }
+        nav {
+            background: #46464679;
+            height: 60px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        nav>a {
+            font-family: Lora;
+            color: #ffffff;
+            font-size: 26px;
+            font-weight: 700;
+            text-align: left;
+            text-decoration: none;
+            position: absolute;
+            left: 25px;
+            top: 10px;
+        }
+
+        nav>a>span {
+            font-family: Lora;
+            color: #f3f3ed;
+            text-align: left;
+        }
+
+        nav>ul {
+            position: absolute;
+            right: 25px;
+            top: 5px;
+        }
+
+        nav>ul>li {
+            display: inline-block;
+            padding: 0 15px;
+        }
+
+        nav>ul>li>a {
+            color: #fff;
+            text-decoration: none;
+            -webkit-transition: all 0.3s ease-in-out;
+            transition: all 0.3s ease-in-out;
+        }
+
+        nav>ul>li>a:hover,
+        nav>ul>li>a:focus {
+            color: #cfc91d;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+		<a href="#index">
+			<span>Data Visualisation</span>
+		</a>
+		<ul>
+			<li>
+				<a href="website.html">HOME</a>
+			</li>
+			<li>
+				<a href="world4.html">WORLDWIDE ATTACKS</a>
+			</li>
+			<li>
+				<a href="barGraph.html">COUNTRYWISE ATTACKS</a>
+			</li>
+			<li>
+				<a href="sankey3.html">ATTACK TYPES, GROUPS AND WEAPONS</a>
+			</li>
+			<li>
+				<a href="stackedChart2.html">ATTACK TYPES DISTRIBUTION</a>
+			</li>
+			<li>
+				<a href="pieNew.html">TARGETS OF TERRORIST GROUPS</a>
+			</li>
+		</ul>
+	</nav>
+    <div class="heading">
+        Number of Attacks Worldwide based on Type of Attack
+
+    </div>
+    <div id="chart"></div>
+    <script>
+        var margin = { top: 60, right: 250, bottom: 50, left: 500 }
+        var width = 1800 - margin.left - margin.right;
+        var height = 800 - margin.top - margin.bottom;
+        d3.csv("attacktypes_formatted.csv", function (data) {
+
+            var svg = d3.select("#chart")
+                .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
+
+            console.log(data)
+            var keys = data.columns.slice(1)
+            console.log(keys)
+            var stackedData = d3.stack()
+                .keys(keys)
+                (data)
+
+            var color = d3.scaleOrdinal()
+                .domain(keys)
+                .range(["#001219",
+                    "#005F73",
+                    "#0A9396",
+                    "#EE9B00",
+                    "#CA6702",
+                    "#BB3E03",
+                    "#AE2012",
+                    "#9B2226",])
+
+            var x = d3.scaleLinear()
+                .domain(d3.extent(data, function (d) { return d.year; }))
+                .range([0, width]);
+
+            var xAxis = svg.append("g")
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(x).ticks(10))
+
+            var y = d3.scaleLinear()
+                .domain([0, d3.max(stackedData, function (d) { return d3.max(d, function (d) { return d[1]; }); })])
+                .range([height, 0]);
+            console.log(y.domain())
+
+            svg.append("g")
+                .call(d3.axisLeft(y).ticks(10))
+
+            svg.append("text")
+                .attr("text-anchor", "end")
+                .attr("x", width / 2)
+                .attr("y", height + 50)
+                .attr("font-size", 25)
+                .text("Year")
+
+            svg.append("text")
+                .attr("text-anchor", "end")
+                .attr("x", -420)
+                .attr("y", -35)
+                .attr("transform", "rotate(-90,20, 50)")
+                .text("Number of Attacks")
+                .attr("font-size", 25)
+                .attr("text-anchor", "start")
+
+            var y = d3.scaleLinear()
+                .domain([0, d3.max(stackedData, function (d) { return d3.max(d, function (d) { return d[1]; }); })])
+                .range([height, 0]);
+
+            svg.append("g")
+                .call(d3.axisLeft(y).ticks(10))
+
+            var clip = svg.append("defs").append("svg:clipPath")
+                .attr("id", "clip")
+                .append("svg:rect")
+                .attr("width", width)
+                .attr("height", height)
+                .attr("x", 0)
+                .attr("y", 0);
+
+            var brush = d3.brushX()
+                .extent([[0, 0], [width, height]])
+                .on("end", updateChart)
+
+            var areaChart = svg.append('g')
+                .attr("clip-path", "url(#clip)")
+
+            var area = d3.area()
+                .x(function (d) { return x(d.data.year); })
+                .y0(function (d) { return y(d[0]); })
+                .y1(function (d) { return y(d[1]); })
+
+            areaChart
+                .selectAll("mylayers")
+                .data(stackedData)
+                .enter()
+                .append("path")
+                .attr("class", function (d) { return "myArea " + d.key })
+                .style("fill", function (d) { return color(d.key); })
+                .attr("d", area)
+
+            areaChart
+                .append("g")
+                .attr("class", "brush")
+                .call(brush);
+
+            var idleTimeout
+            function idled() { idleTimeout = null; }
+
+            function updateChart() {
+
+                extent = d3.event.selection
+
+                if (!extent) {
+                    if (!idleTimeout) return idleTimeout = setTimeout(idled, 350);
+                    x.domain(d3.extent(data, function (d) { return d.year; }))
+                } else {
+                    x.domain([x.invert(extent[0]), x.invert(extent[1])])
+                    areaChart.select(".brush").call(brush.move, null) 
+                }
+
+                xAxis.transition().duration(1000).call(d3.axisBottom(x).ticks(10))
+                areaChart
+                    .selectAll("path")
+                    .transition().duration(1000)
+                    .attr("d", area)
+            }
+
+            var highlight = function (d) {
+                d3.selectAll(".myArea").style("opacity", .1)
+                d3.select("." + d.replaceAll(' ', '_')).style("opacity", 1)
+            }
+
+            var removeHighlight = function (d) {
+                d3.selectAll(".myArea").style("opacity", 1)
+            }
+
+            var size = 25
+            svg.selectAll("myrect")
+                .data(keys)
+                .enter()
+                .append("rect")
+                .attr("x", 100)
+                .attr("y", function (d, i) { return 10 + i * (size + 5) }) 
+                .attr("width", size)
+                .attr("height", size)
+                .style("fill", function (d) { return color(d) })
+                .on("mouseover", highlight)
+                .on("mouseleave", removeHighlight)
+
+            
+            svg.selectAll("mylabels")
+                .data(keys)
+                .enter()
+                .append("text")
+                .attr("x", 100 + size * 1.2)
+                .attr("y", function (d, i) { return 10 + i * (size + 5) + (size / 2) }) 
+                .style("fill", function (d) { return color(d) })
+                .text(function (d) { return d })
+                .attr("font-size", 25)
+                .style("alignment-baseline", "middle")
+                .on("mouseover", highlight)
+                .on("mouseleave", removeHighlight)
+
+        })
+
+
+
+    </script>
+</body>
+
+</html>
