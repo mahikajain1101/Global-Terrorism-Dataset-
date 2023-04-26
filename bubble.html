@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://d3js.org/d3-geo-projection.v2.min.js"></script>
+<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qtip2/3.0.3/jquery.qtip.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/qtip2/3.0.3/jquery.qtip.min.css" rel="stylesheet" />
+<style>
+   body {
+      background-color: white;
+      font-family: Lora;
+      margin: 0;
+      padding: 0;
+   }
+
+   #my_dataviz {
+      margin-top: 0px;
+      margin-bottom: 10px;
+      margin-left: 20px
+         /* Add top margin in pixels */
+   }
+
+   /* body{
+      background-color: black;
+   } */
+   .tooltip {
+      background-color: rgb(63, 57, 57);
+      color: rgb(250, 243, 243);
+      padding: 10px;
+      font-size: 15px;
+   }
+
+   nav {
+      background: #46464679;
+      height: 60px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+   }
+
+   nav>a {
+      font-family: Lora;
+      color: #464242;
+      font-size: 26px;
+      font-weight: 700;
+      text-align: left;
+      text-decoration: none;
+      position: absolute;
+      left: 25px;
+      top: 10px;
+   }
+
+   nav>a>span {
+      font-family: Lora;
+      color: #41413d;
+      text-align: left;
+   }
+
+   nav>ul {
+      position: absolute;
+      right: 25px;
+      top: 5px;
+   }
+
+   nav>ul>li {
+      display: inline-block;
+      padding: 0 15px;
+   }
+
+   nav>ul>li>a {
+      color: #474545;
+      text-decoration: none;
+      -webkit-transition: all 0.3s ease-in-out;
+      transition: all 0.3s ease-in-out;
+   }
+
+   nav>ul>li>a:hover,
+   nav>ul>li>a:focus {
+      color: #cfc91d;
+   }
+</style>
+<!-- <h1 style="align-items: center">Bubble map illustrating number of casualties at various locations around the globe</h1> -->
+<svg id="my_dataviz" width="1800" height="900"></svg>
+
+<body>
+
+   <!-- <div id="tooltip" class="tooltip"></div> -->
+   <nav>
+     <a href="#index">
+         <center>
+             <span>Terrorist Activities worldwide</span>
+         </center>
+     </a>
+     <ul>
+      <li>
+         <a href="website.html">HOME</a>
+      </li>
+      <li>
+         <a href="world4.html">WORLDWIDE ATTACKS</a>
+      </li>
+      <li>
+         <a href="barGraph.html">COUNTRYWISE ATTACKS</a>
+      </li>
+      <li>
+         <a href="sankey3.html">ATTACK TYPES, GROUPS AND WEAPONS</a>
+      </li>
+      <li>
+         <a href="stackedChart2.html">ATTACK TYPES DISTRIBUTION</a>
+      </li>
+      <li>
+         <a href="pieNew.html">TARGETS OF TERRORIST GROUPS</a>
+      </li>
+   </ul>
+ </nav>
+   <script>
+
+
+      var svg = d3.select("#my_dataviz"),
+         width = +svg.attr("width"),
+         height = +svg.attr("height");
+
+
+      // Map and projection
+      var projection = d3.geoMiller()
+         .center([0, 20])                // GPS of location to zoom on
+         .scale(250)                       // This is like the zoom
+         .translate([width / 2, height / 2])
+
+      d3.queue()
+         .defer(d3.json, "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson")  // World shape
+         .defer(d3.csv, "bubble2.csv") // Position of circles
+         .await(ready);
+
+
+      function ready(error, dataGeo, data) {
+
+         data = data.filter(d => d.gname !== "Unknown")
+
+         // Create a color scale
+         var allgroups = d3.map(data, function (d) { return (d.gname) }).keys()
+
+         var color = d3.scaleOrdinal()
+            .domain(allgroups)
+            .range(d3.schemeCategory20)
+
+         var map = svg.append("g")
+            .selectAll("path")
+            .data(dataGeo.features)
+            .enter()
+            .append("path")
+            .attr("fill", "#c7cbd1")
+            .attr("d", d3.geoPath()
+               .projection(projection)
+            )
+            .style("stroke", "white")
+            .style("stroke-width", 0.3) // Set the stroke width to 2 pixe
+            .style("opacity", 1)
+            .attr("height", 460)
+
+         // Draw the map
+
+         // Add a scale for bubble size
+         var valueExtent = d3.extent(data, function (d) { return +d.n; })
+         var size = d3.scaleSqrt()
+            .domain(valueExtent)  // What's in the data
+            .range([1, 100])  // Size in pixel
+
+
+         var zoom = d3.zoom()
+            .scaleExtent([1, 8])
+            .on("zoom", zoomed);
+
+         svg.call(zoom);
+
+         function zoomed() {
+            map.attr("transform", d3.event.transform);
+            svg.selectAll("circle")
+               .attr("transform", d3.event.transform);
+         }
+
+         // Add circles:
+         svg
+            .selectAll("myCircles")
+            .data(data.sort(function (a, b) { return +b.n - +a.n }).filter(function (d, i) { return i < 1000 }))
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) { return projection([+d.homelon, +d.homelat])[0] })
+            .attr("cy", function (d) { return projection([+d.homelon, +d.homelat])[1] })
+            .attr("r", function (d) { return size(+d.n) * 0.5 })
+            .style("fill", function (d) { return color(d.gname) })
+            .attr("stroke", function (d) { if (d.n > 2000) { return "black" } else { return "white" } })
+            .attr("stroke-width", 0.3)
+            .attr("fill-opacity", 0.7)
+            .on("mouseover", function (d) {  // Add mouseover event listener
+               d3.select(this) // Select the circle that triggered the event
+                  .attr("stroke-width", 2) // Increase stroke width to highlight
+                  .attr("fill-opacity", 1); // Increase fill opacity to highlight
+
+               // d3.select(".tooltip")
+               //    .style("opacity", 0.8) 
+               //    .html("Country: " + d.country + "<br/>" + "Region: " + d.homecontinent + "<br/>" + "Terrorist Group: " + d.gname + "</br" + "Number of Attacks:  " + d.n);
+
+               var mousePosition = d3.mouse(this);
+
+               // Position the tooltip element near the cursor
+               tooltip.style("left", mousePosition[0] + 20 + "px")
+                  .style("top", mousePosition[1] + 20 + "px")
+                  .style("opacity", 0.5)
+                  .style("display", "block");
+
+            })
+
+            .on("mouseout", function (d) { // Add mouseout event listener
+               d3.select(this) // Select the circle that triggered the event
+                  .attr("stroke-width", 0.4) // Reset stroke width
+                  .attr("fill-opacity", 0.7); // Reset fill opacity
+
+               // d3.select("#tooltip").
+               //    style("opacity", 0);
+            })
+            .each(function (d) {
+               // console.log(i.data[0])
+               $(this).qtip({
+                  content: "Country: " + d.country + "<br/>" + "Region: " + d.homecontinent + "<br/>" + "Number of Attacks:  " + d.n + "<br/>" + "Terrorist Group: " + d.gname,
+                  show: {
+                     event: 'mouseover'
+                  },
+
+                  hide: {
+                     event: 'mouseout'
+                  },
+                  style: {
+                     classes: 'tooltip'
+                  },
+                  position: {
+                     my: 'bottom left',
+                     at: 'top right',
+                     target: 'mouse',
+                     // adjust: {
+                     //    mouse: false // disable repositioning on mouse move
+                     // },
+                     offset: {
+                        x: 10,
+                        y: -28
+                     }
+                  }
+               });
+            })
+      }
+
+   </script>
+</body>

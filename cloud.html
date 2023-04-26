@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title> World Cloud</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/d3-cloud@1.2.5/build/d3.layout.cloud.js"></script>
+    <style>
+        body {
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: rgb(226, 224, 224);
+        }
+
+        #tooltip {
+            position: absolute;
+            z-index: 10;
+            opacity: 0;
+            background-color: rgb(5, 5, 5);
+            color: white;
+            padding: 5px;
+            border-radius: 3px;
+            font-size: 18px;
+            pointer-events: none;
+            /* prevent tooltip from blocking interactions with underlying elements */
+        }
+    </style>
+</head>
+
+<body>
+    <h1 style =  "color: black"> Word Cloud showing Terrorist Group in proportion to Number of Attacks</h1>
+    <div id="tooltip" class="tooltip"></div>
+    <script>
+        // List of hard-coded words
+        d3.csv("cloud.csv").then(function (data) {
+
+            // var groupedData = {};
+
+            // // Loop through each row in the data
+            // for (var i = 0; i < data.length; i++) {
+            //     var row = data[i];
+            //     var gname = row.gname;
+            //     if (!groupedData[gname]) {
+            //         groupedData[gname] = 1;
+            //     }
+            //     else {
+            //         groupedData[gname]++;
+            //     }
+            // }
+
+            // Create an array to store the final result
+            var wordss = [];
+
+            // Loop through the keys in the groupedData object
+            for (var i = 0; i < data.length; i++) {
+                var obj = {
+                    text: data[i].gname,
+                    size: data[i].frequency
+                };
+
+
+                // Push the object into the resultArray
+                wordss.push(obj);
+            }
+
+            wordss.sort(function (a, b) {
+                return b.size - a.size;
+            });
+
+            wordsss = wordss.slice(1, 70);
+
+            //console.log(wordsss)
+
+            var words = wordsss.map(function (d, i) {
+                return { text: d.text, size: d.size / 100, count: d.size };
+            })
+
+            //console.log(words)
+
+            // Set up the word cloud layout
+            var layout = d3.layout.cloud()
+                .size([800, 600]) // set the size of the word cloud container
+                .words(words)
+                .padding(6)
+                //.rotate(function () { return 0; })
+                .rotate(function (d) {
+                    var distanceFromCenter = Math.sqrt((d.x * d.x) + (d.y * d.y));
+                    var rotationAngle = 0;
+                    if (distanceFromCenter > 0) {
+                        rotationAngle = (d.y / distanceFromCenter) * 90;
+                    }
+                    return rotationAngle;
+                })
+
+                //.rotate(function () { return ~~(Math.random() * 2) * 90; }) // rotate words randomly to 0 or 90 degrees
+                //.fontSize(function (d) { return d.size; })
+                .fontSize(function (d) { return Math.sqrt(d.size) * 9; }) // custom font size scaling function
+                .on("end", draw);
+
+            // Call the word cloud
+
+            function draw(words) {
+                var colors = d3.scaleOrdinal(d3.schemeCategory10)
+                d3.select("body")
+                    .append("svg")
+                    .attr("width", 800)
+                    .attr("height", 600)
+                    .style("margin-top", 150)
+                    .append("g")
+                    .attr("transform", "translate(400,300)") // move the word cloud to the center of the SVG container
+                    .selectAll("text")
+                    .data(words)
+                    .enter()
+                    .append("text")
+                    .style("font-size", function (d) { return d.size + "px"; })
+                    // .style("fill", function (d, i) { return fill(i); }) // use fill function to apply colors
+                    .style("fill", function (d, i) { return colors(i); }) // assign a different color based on the index
+                    .attr("text-anchor", "middle")
+                    .attr("transform", function (d) {
+                        return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+                    })
+                    .text(function (d) { return d.text; })
+                    .style("letter-spacing", "-1px") // decrease letter spacing
+                    .attr("dx", "-10px") // adjust spacing between words horizontally
+                    .attr("dy", "-5px")// adjust spacing between words vertically
+                    .on("mouseover", function (event) { // Add tooltip on mouseover
+
+                        var d = d3.select(this).datum();
+                        console.log(d)
+                        d3.select("#tooltip")
+                            .style("left", event.pageX + "px")
+                            .style("top", event.pageY + "px")
+                            .style("opacity", 0.8)
+                            .html("Terrorist Group name: " + d.text + "<br/>" + "Number of Attacks:  " + d.count);
+                    })
+                    .on("mouseout", function () { // Hide tooltip on mouseout
+                        d3.select("#tooltip").
+                            style("opacity", 0);
+                    })
+                    .on("click", function (event) {
+                        var d = d3.select(this).datum();
+                        var name = d.text;
+                        updateChart(name);
+                    })
+
+                function updateChart(name) {
+                   // console.log(name)
+                    window.location.href = "scatter.html?name=" + encodeURIComponent(name);
+                }
+            }
+
+
+            layout.start();
+        })
+
+    </script>
+</body>
+
+</html>
