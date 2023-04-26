@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Connected Scatter Chart</title>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+
+<style>
+  body {
+    background-color: #dcdde2;
+    font-family: Lora;
+    margin: 0;
+    padding: 0;
+  }
+
+  #my_dataviz {
+    padding-top: 30px;
+  }
+
+  nav {
+    background: #46464679;
+    height: 60px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+
+  #buttonContainer {
+    /* align-items: center; */
+    /* margin-left: 450px;*/
+    margin-top: 100px;
+    position: absolute;
+    top: 0;
+    left: 43%;
+    transform: translateX(-50%);
+  }
+
+  #hideButton {
+    background-color: black;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 26px;
+    font-weight: bold;
+    border-radius: 5px;
+    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.25);
+    cursor: pointer;
+  }
+
+  #hideButton:hover {
+    background-color: #444;
+  }
+
+
+  nav>a {
+    font-family: Lora;
+    color: #ffffff;
+    font-size: 26px;
+    font-weight: 700;
+    text-align: left;
+    text-decoration: none;
+    position: absolute;
+    left: 25px;
+    top: 10px;
+  }
+
+  nav>a>span {
+    font-family: Lora;
+    color: #f3f3ed;
+    text-align: left;
+  }
+
+  nav>ul {
+    position: absolute;
+    right: 25px;
+    top: 5px;
+  }
+
+  nav>ul>li {
+    display: inline-block;
+    padding: 0 15px;
+  }
+
+  nav>ul>li>a {
+    color: #fff;
+    text-decoration: none;
+    -webkit-transition: all 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
+  }
+
+  nav>ul>li>a:hover,
+  nav>ul>li>a:focus {
+    color: #cfc91d;
+  }
+
+  /* .reset{
+    margin-left: 150px;
+  } */
+</style>
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<body>
+  <nav>
+    <a href="website.html">
+      <center>
+        <span>Terrorist Activities worldwide</span>
+      </center>
+    </a>
+    <ul>
+      <li>
+        <a href="website.html">HOME</a>
+      </li>
+      <li>
+        <a href="world4.html">WORLDWIDE ATTACKS</a>
+      </li>
+      <li>
+        <a href="barGraph.html">COUNTRYWISE ATTACKS</a>
+      </li>
+      <li>
+        <a href="sankey3.html">ATTACK TYPES, GROUPS AND WEAPONS</a>
+      </li>
+      <li>
+        <a href="stackedChart2.html">ATTACK TYPES DISTRIBUTION</a>
+      </li>
+      <li>
+        <a href="pieNew.html">TARGETS OF TERRORIST GROUPS</a>
+      </li>
+    </ul>
+  </nav>
+
+
+  <div id="buttonContainer" , class="reset">
+    <button id="hideButton">Reset</button>
+  </div>
+  <div id="my_dataviz"></div>
+  <div id="tooltip"></div>
+  <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+
+  <script>
+
+    var margin = { top: 70, right: 100, bottom: 50, left: 80 },
+      width = 1200 - margin.left - margin.right - 40,
+      height = 800 - margin.top - margin.bottom;
+
+    var svg = d3.select("#my_dataviz")
+      .append("svg")
+      .attr("width", width + margin.left + margin.right + 500)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + (margin.left + 250) + "," + margin.top + ")");
+
+
+
+    d3.csv("scatter.csv", function (data) {
+
+      var allGroup = ["Taliban", "ISIL", "SL", "FMLN", "Shabaab", "NPA", "IRA", "FARC", "Boko", "PKK", "ETA", "Maoists", "LTTE", "ELN", "TTP", "Palestinians", "Houthi", "AQAP"]
+
+      var dataReady = allGroup.map(function (grpName) { // .map allows to do something for each element of the list
+        return {
+          name: grpName,
+          values: data.map(function (d) {
+            return { time: d.year, value: +d[grpName] };
+          })
+        };
+      });
+
+      var myColor = d3.scaleOrdinal()
+        .domain(allGroup)
+        .range(d3.schemeCategory20);
+
+
+      // Add X axis --> it is a date format
+      var x = d3.scaleLinear()
+        .domain([1969, 2018])
+        .range([0, width]);
+
+
+      svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x))
+        .style("font", "18px times")
+
+      // Add Y axis
+      var y = d3.scaleLinear()
+        .domain([0, 1400])
+        .range([height, 0]);
+
+      svg.append("g")
+        .call(d3.axisLeft(y))
+        .style("font", "18px times");
+
+      var line = d3.line()
+        .x(function (d) { return x(+d.time) })
+        .y(function (d) {
+          // if (+d.value > 0) {
+          return y(+d.value);
+        });
+
+      svg.append("text")
+        .attr("class", "x-label")
+        .attr("text-anchor", "end")
+        .attr("x", width / 2)
+        .attr("y", height + 50)
+        .attr("font-size", 30)
+        .text("Year")
+
+
+      svg.append("text")
+        .attr("class", "y-label")
+        .attr("text-anchor", "end")
+        .attr("y", -80)
+        .attr("x", -230)
+        .attr("dy", ".85em")
+        .attr("transform", "rotate(-90)")
+        .attr("font-size", 30)
+        .text("Number of Activities");
+
+
+      d3.select("#hideButton").on("click", function () {
+        linePath.style("opacity", 0);
+        scatterPoints.style("opacity", 0);
+      });
+
+      var duration = 3000;
+      var linePath = svg.selectAll("myLines")
+        .data(dataReady)
+        .enter()
+        .append("path")
+        .attr("class", function (d) { return d.name })
+        .attr("d", function (d) { return line(d.values) })
+        .attr("stroke", function (d) { return myColor(d.name) })
+        .style("stroke-width", 3)
+        .style("fill", "none")
+        .on("mouseover", function (event) { // Add tooltip on mouseover
+          var d = d3.select(this).datum();
+          console.log(d)
+        })
+
+      //-----------------  ADD THE SCATTER POINTS--------------------------
+
+      var scatterPoints = svg.selectAll("myDots")
+        .data(dataReady)
+        .enter()
+        // .append('g')
+        .append("path")
+        .attr("class", function (d) { return d.name })
+        .style("fill", function (d) { return myColor(d.name) })
+        // Second we need to enter in the 'values' part of this group
+        .selectAll("myPoints")
+        .data(function (d) { return d.values })
+        .enter()
+        .append("circle")
+        .attr("cx", function (d) { return x(d.time) })
+        .attr("cy", function (d) { return y(d.value) })
+        .attr("r", 4)
+        .attr("stroke", "white")
+      //.attr("opacity", 1) // Set initial opacity to 0
+
+
+      var legend = svg
+        .selectAll(".legend")
+        .data(dataReady)
+        .enter()
+        .append('g')
+        .attr("class", "legend")
+        .attr("transform", function (d, i) { return "translate(0," + (i * 20) + ")"; })
+
+      legend.append("rect")
+        .attr("x", width + 30) // Set x position to 0
+        .attr("y", function (d, i) {
+          var squareHeight = 20; // height of each square
+          var spacing = 0; // space between adjacent squares
+          return i * (squareHeight + spacing); // multiply by index to position each square
+        })
+        .attr("width", 20)
+        .attr("height", 20)
+        .style("fill", function (d) { return myColor(d.name); });
+
+
+      legend.append("text")
+        .attr("x", width + 60)
+        .attr("y", function (d, i) {
+          var rectHeight = 20; // height of each rectangle
+          var spacing = 0; // space between adjacent rectangles
+          return i * (rectHeight + spacing) + rectHeight / 2; // multiply by index to position each text
+        })
+        .attr("dy", ".35em")
+        .text(function (d) {
+          if (d.name === "ISIL")
+            return "Islamic State of Iraq and the Levant"
+          else if (d.name === "SL")
+            return "Shining Path (SL)"
+          else if (d.name === "FMLN")
+            return "Farabundo Marti National Liberation Front (FMLN)"
+          else if (d.name === "NPA")
+            return "New People's Army (NPA)"
+          else if (d.name === "IRA")
+            return "Irish Republican Army (IRA)"
+          else if (d.name === "FARC")
+            return "Revolutionary Armed Forces of Colombia (FARC)"
+          else if (d.name === "Boko")
+            return "Boko Haram"
+          else if (d.name === "PKK")
+            return "Kurdistan Workers' Party (PKK)"
+          else if (d.name === "ETA")
+            return "Basque Fatherland and Freedom (ETA)"
+          else if (d.name === "TTP")
+            return "Tehrik-i-Taliban Pakistan (TTP)"
+          else if (d.name === "LTTE")
+            return "Liberation Tigers of Tamil Eelam (LTTE)"
+          else if (d.name === "Shabaab")
+            return "Al-Shabaab"
+          else if (d.name === "ELN")
+            return "National Liberation Army of Colombia (ELN)"
+          else if (d.name === "Houthi")
+            return "Houthi extremists (Ansar Allah)"
+          else if (d.name === "AQAP")
+            return "Al-Qaida in the Arabian Peninsula (AQAP)"
+          else
+            return d.name;
+        });
+
+      svg.selectAll(".legend")
+        .on("click", function (d) {
+          // is the element currently visible ?
+          currentOpacity = d3.selectAll("." + d.name).style("opacity")
+          // Change the opacity: from 0 to 1 or from 1 to 0
+          d3.selectAll("." + d.name).transition().style("opacity", currentOpacity == 1 ? 0 : 1)
+        })
+    })
+
+  </script>
+</body>
+
+</html>
