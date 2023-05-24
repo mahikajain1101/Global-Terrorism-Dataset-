@@ -1,4 +1,4 @@
-# Global-Terrorism-Dataset-
+# Global-Terrorism
 Data Visualisation Project
 A data visualisation on the multiple aspects of Global Terrorism, derived from the Global Terrorism Dataset. 
 Consists of the following graphs:
